@@ -5,10 +5,7 @@ Runs as a pyComputer external app.
 
 import sys
 import time
-from src.ui.renderer import Renderer
-from src.ui.input import get_key as _ui_get_key, Key as UI_Key, web_input_queue
-from src.ui.widgets import Dialog
-from src.utils.platform import is_web
+from pycomputersdk import Renderer, get_key, Key, Dialog, is_web, web_input_queue
 from levels import LEVELS
 
 GRAVITY = 0.5
@@ -262,16 +259,8 @@ def draw_overlay(title, lines):
     r.flush()
 
 
-def get_key():
-    if is_web():
-        if web_input_queue:
-            return web_input_queue.pop(0)
-        return None
-    return _ui_get_key()
-
-
 def main(*args):
-    from src.ui.input import setup_raw as setup_terminal, restore as restore_terminal, cleanup
+    from pycomputersdk import setup_raw as setup_terminal, restore as restore_terminal, cleanup
 
     game = Game()
     old_settings = setup_terminal()
