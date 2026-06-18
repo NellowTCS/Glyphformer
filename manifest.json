@@ -1,0 +1,7 @@
+{
+  "name": "glyphformer",
+  "version": "0.1.0",
+  "entry": "main.py",
+  "permissions": [],
+  "description": "2D text-based platformer with physics, coins, and scrolling levels."
+}
