@@ -3,6 +3,7 @@ Glyphformer: 2D text-based platformer!
 """
 
 import atexit
+import sys
 import time
 from pycomputersdk import (
     Renderer, get_key, Key,
