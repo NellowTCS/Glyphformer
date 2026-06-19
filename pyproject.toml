@@ -1,0 +1,17 @@
+[project]
+name = "glyphformer"
+version = "0.1.0"
+description = "2D text-based platformer, a pyComputer SDK app"
+requires-python = ">=3.12"
+dependencies = ["pycomputersdk"]
+
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.uv.sources]
+# Remove this block once pycomputersdk is published to PyPI.
+pycomputersdk = { path = "../pyComputer/pyComputerSDK" }

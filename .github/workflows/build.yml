@@ -1,0 +1,42 @@
+name: Build .pycapp
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pycomp
+        run: pip install pycomputersdk
+
+      - name: Build .pycapp
+        run: pycomp build . -o dist/glyphformer.pycapp
+
+      - name: Copy to repo root (for registry/installer)
+        run: cp dist/glyphformer.pycapp Glyphformer.pycapp
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glyphformer-pycapp
+          path: dist/glyphformer.pycapp
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" Glyphformer.pycapp --clobber

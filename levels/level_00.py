@@ -1,7 +1,7 @@
-"""Level 00: Getting Started"""
+"""Level 00: First Steps"""
 
 level = {
-    "name": "Getting Started",
+    "name": "First Steps",
     "width": 60,
     "height": 20,
     "tiles": [
@@ -27,6 +27,7 @@ level = {
         "############################################################",
     ],
     "spawn": (2, 17),
-    "coins": [(10, 14), (28, 12), (50, 14)],
+    "coins": [(10, 15), (28, 12), (50, 14)],
+    "spikes": [],
     "flag": (56, 17),
 }
