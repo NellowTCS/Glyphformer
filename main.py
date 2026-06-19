@@ -7,6 +7,7 @@ import time
 from pycomputersdk import (
     Renderer, get_key, Key,
     setup_raw as setup_terminal, restore as restore_terminal, cleanup,
+    is_web,
 )
 from levels import LEVELS
 
@@ -566,6 +567,7 @@ def draw_viewport(game):
     spike_set = set(lv.get("spikes", []))
     coin_set  = set(game.coins_left)
 
+    buf = []
     for row in range(VIEWPORT_H):
         line = ""
         for col_off in range(VIEWPORT_W):
@@ -584,12 +586,12 @@ def draw_viewport(game):
                 line += TILE_FLAG
             else:
                 line += TILE_AIR
-        r.move(2, 3 + row).write(line)
+        buf.append(f"\033[{3 + row};2H{line}")
 
     # Draw player
     px = 2 + int((game.player.x - cam) * 2)
     py = 3 + int(game.player.y)
-    r.move(px, py).write(r.cyan(PLAYER_CHAR))
+    buf.append(f"\033[{py};{px}H{r.cyan(PLAYER_CHAR)}")
 
     # HUD
     coin_str  = f"{game.coins_collected}/{game.total_coins}"
@@ -598,13 +600,13 @@ def draw_viewport(game):
     hud_left  = f" {lv['name']}  |  ◆ {coin_str}  |  ⏱ {time_str}"
     hud_right = f"  {lives_s}"
     hud_line  = hud_left + hud_right.rjust(max(0, VIEWPORT_W * 2 - len(hud_left)))
-    r.move(1, 1).write(r.bold(hud_line[:VIEWPORT_W * 2 + 2]))
+    buf.append(f"\033[1;1H{r.bold(hud_line[:VIEWPORT_W * 2 + 2])}")
 
     # Controls footer
-    r.move(1, 3 + VIEWPORT_H).write(
-        r.dim("  WASD/Arrows: move & jump   S/↓: fast-fall   P/Esc: pause   R: restart")
-    )
-    r.flush()
+    buf.append(f"\033[{3 + VIEWPORT_H};1H{r.dim('  WASD/Arrows: move & jump   S/\u2193: fast-fall   P/Esc: pause   R: restart')}")
+
+    sys.stdout.write("".join(buf))
+    sys.stdout.flush()
 
 
 #  Main gameplay loop
@@ -718,7 +720,7 @@ def run_level(game):
                         break
                 else:
                     game.poll_key(key)
-            time.sleep(0.002)
+            time.sleep(0.005 if is_web() else 0.002)
 
 
 #  App entry point
