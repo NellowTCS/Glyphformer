@@ -37,6 +37,10 @@ PLAYER_CHAR = "[]"
 
 MAX_LIVES   = 3
 
+# Feel
+COYOTE_TIME  = 0.08   # seconds after leaving ground that jump still works
+JUMP_BUFFER  = 0.08   # seconds a jump press is remembered before landing
+
 r = Renderer()
 
 
@@ -94,6 +98,8 @@ class Player:
         self.grounded = False
         self.w = PLAYER_W
         self.h = PLAYER_H
+        self.coyote_timer = 0.0
+        self.jump_buffer_timer = 0.0
 
 
 class Game:
@@ -153,12 +159,21 @@ class Game:
         if self.keys.get("d"):
             accel_x += MOVE_ACCEL
         fast_fall = self.keys.get("s", False)
-        jump = self.w_pressed
+
+        jump_pressed = self.w_pressed
         self.w_pressed = False
+        if jump_pressed:
+            self.player.jump_buffer_timer = JUMP_BUFFER
 
         tiles = self.level["tiles"]
         lw    = self.level["width"]
         lh    = self.level["height"]
+
+        # Update coyote timer
+        if self.player.grounded:
+            self.player.coyote_timer = COYOTE_TIME
+        else:
+            self.player.coyote_timer = max(0, self.player.coyote_timer - dt)
 
         for _ in range(SUB_STEPS):
             self.player.vx += accel_x
@@ -168,7 +183,6 @@ class Game:
                 self.player.vx = MAX_SPEED if self.player.vx > 0 else -MAX_SPEED
             if abs(self.player.vx) < 0.0005:
                 self.player.vx = 0.0
-
             self.player.x += self.player.vx / SUB_STEPS
             self._resolve_x(tiles, lw, lh)
 
@@ -182,10 +196,16 @@ class Game:
             self.player.grounded = False
             self._resolve_y(tiles, lw, lh)
 
-            if jump and self.player.grounded:
+            # Coyote time + jump buffer
+            if self.player.jump_buffer_timer > 0 and (self.player.grounded or self.player.coyote_timer > 0):
                 self.player.vy = JUMP_VEL
                 self.player.grounded = False
-                jump = False
+                self.player.jump_buffer_timer = 0.0
+                self.player.coyote_timer = 0.0
+
+        # Decrement jump buffer if it wasn't consumed
+        if self.player.jump_buffer_timer > 0:
+            self.player.jump_buffer_timer = max(0, self.player.jump_buffer_timer - dt)
 
         # Fall into pit
         if self.player.y > lh:
@@ -589,6 +609,36 @@ def draw_viewport(game):
 
 #  Main gameplay loop
 
+def _process_key(game, key):
+    """Process a single key during gameplay. Returns action string or None."""
+    if key is None:
+        return None
+    kl = key.lower()
+    if kl == "q":
+        return "quit"
+    if kl == "r":
+        return "restart"
+    if kl in ("p",) or key == Key.ESCAPE:
+        return "pause"
+    game.poll_key(key)
+    return None
+
+
+def _handle_pause(game):
+    """Pause menu. Returns action: 'quit', 'menu', 'restart', or 'resume'."""
+    draw_viewport(game)
+    result = screen_pause(game)
+    if result == "quit":
+        return "quit"
+    if result == "menu":
+        return "menu"
+    if result == "restart":
+        return "restart"
+    drain_keys()
+    clear_screen()
+    return "resume"
+
+
 def run_level(game):
     """
     Runs the game loop for the current level.
@@ -601,53 +651,74 @@ def run_level(game):
     while True:
         frame_start = time.time()
 
-        # Input
+        should_tick = True
+
+        # Input drain at start of frame
         while True:
             key = get_key()
             if key is None:
                 break
-            kl = key.lower()
-
-            if kl == "q":
+            action = _process_key(game, key)
+            if action == "quit":
                 return "quit"
-            if kl == "r":
+            if action == "restart":
                 game.load_level(game.level_idx)
                 drain_keys()
                 clear_screen()
-                continue
-            if kl in ("p",) or key == Key.ESCAPE:
-                draw_viewport(game)  # render first so overlay has something behind it
-                result = screen_pause(game)
-                if result == "quit":
+                should_tick = False
+                break
+            if action == "pause":
+                action = _handle_pause(game)
+                if action == "quit":
                     return "quit"
-                if result == "menu":
+                if action == "menu":
                     return "menu"
-                if result == "restart":
+                if action == "restart":
                     game.load_level(game.level_idx)
                     drain_keys()
                     clear_screen()
-                    continue
-                # resume = fall through
-                drain_keys()
-                clear_screen()
-                continue
+                    should_tick = False
+                    break
+                # resume: proceed to tick
+                break
 
-            game.poll_key(key)
+        if should_tick:
+            dt = FRAME_TIME
+            game.tick(dt)
+            draw_viewport(game)
 
-        dt = FRAME_TIME  # logical tick, not wall time
-        game.tick(dt)
-        draw_viewport(game)
+            if game.dead:
+                return "dead"
+            if game.won:
+                return "won"
 
-        if game.dead:
-            return "dead"
-        if game.won:
-            return "won"
+            game.clear_frame_keys()
 
-        game.clear_frame_keys()
-
-        elapsed = time.time() - frame_start
-        sleep_t = max(0, FRAME_TIME - elapsed)
-        time.sleep(sleep_t)
+        while time.time() - frame_start < FRAME_TIME:
+            key = get_key()
+            if key is not None:
+                kl = key.lower()
+                if kl == "q":
+                    return "quit"
+                if kl == "r":
+                    game.load_level(game.level_idx)
+                    drain_keys()
+                    clear_screen()
+                    break
+                if kl in ("p",) or key == Key.ESCAPE:
+                    action = _handle_pause(game)
+                    if action == "quit":
+                        return "quit"
+                    if action == "menu":
+                        return "menu"
+                    if action == "restart":
+                        game.load_level(game.level_idx)
+                        drain_keys()
+                        clear_screen()
+                        break
+                else:
+                    game.poll_key(key)
+            time.sleep(0.002)
 
 
 #  App entry point
