@@ -3,40 +3,41 @@ name: Build .pycapp
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-  release:
-    types: [published]
+    paths:
+      - main.py
+      - levels/**
+      - manifest.json
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install pycomp
+      - name: Install pyComputer SDK
         run: pip install pycomputersdk
 
       - name: Build .pycapp
-        run: pycomp build . -o dist/glyphformer.pycapp
+        run: pycomp build . -o dist
+        working-directory: Glyphformer
 
-      - name: Copy to repo root (for registry/installer)
+      - name: Copy to repo root
         run: cp dist/glyphformer.pycapp Glyphformer.pycapp
+        working-directory: Glyphformer
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Commit if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          name: glyphformer-pycapp
-          path: dist/glyphformer.pycapp
-
-      - name: Upload to release
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release upload "${{ github.event.release.tag_name }}" Glyphformer.pycapp --clobber
+          commit_message: "build: update Glyphformer.pycapp [skip ci]"
+          file_pattern: Glyphformer/Glyphformer.pycapp
+          skip_dirty_check: false
