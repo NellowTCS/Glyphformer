@@ -29,15 +29,13 @@ jobs:
 
       - name: Build .pycapp
         run: pycomp build . -o dist
-        working-directory: Glyphformer
 
       - name: Copy to repo root
         run: cp dist/glyphformer.pycapp Glyphformer.pycapp
-        working-directory: Glyphformer
 
       - name: Commit if changed
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "build: update Glyphformer.pycapp [skip ci]"
-          file_pattern: Glyphformer/Glyphformer.pycapp
+          file_pattern: Glyphformer.pycapp
           skip_dirty_check: false
