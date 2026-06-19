@@ -11,28 +11,28 @@ from pycomputersdk import (
 from levels import LEVELS
 
 # Physics
-GRAVITY        = 0.5
-JUMP_VEL       = -3.2
-MOVE_ACCEL     = 0.6
-FRICTION_AIR   = 0.82
-FRICTION_GROUND= 0.68
-MAX_SPEED      = 3.2
+GRAVITY        = 0.1
+JUMP_VEL       = -2.0
+MOVE_ACCEL     = 0.10
+FRICTION_AIR   = 1.98
+FRICTION_GROUND= 0.88
+MAX_SPEED      = 0.30
 PLAYER_W       = 0.8
 PLAYER_H       = 1.0
 SUB_STEPS      = 4
 
 # Display
-TARGET_FPS  = 60
+TARGET_FPS  = 30
 FRAME_TIME  = 1.0 / TARGET_FPS
 VIEWPORT_W  = 36
-VIEWPORT_H  = 18
+VIEWPORT_H  = 20
 
 # Tiles
 TILE_AIR    = "  "
 TILE_SOLID  = "▓▓"
 TILE_COIN   = "◆◆"
 TILE_FLAG   = "⚑⚑"
-TILE_SPIKE  = "^^"
+TILE_SPIKE  = "▲▲"
 PLAYER_CHAR = "[]"
 
 MAX_LIVES   = 3
@@ -166,7 +166,7 @@ class Game:
             self.player.vx *= friction
             if abs(self.player.vx) > MAX_SPEED:
                 self.player.vx = MAX_SPEED if self.player.vx > 0 else -MAX_SPEED
-            if abs(self.player.vx) < 0.05:
+            if abs(self.player.vx) < 0.0005:
                 self.player.vx = 0.0
 
             self.player.x += self.player.vx / SUB_STEPS
