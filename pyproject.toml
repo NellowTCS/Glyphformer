@@ -13,5 +13,4 @@ build-backend = "hatchling.build"
 packages = ["."]
 
 [tool.uv.sources]
-# Remove this block once pycomputersdk is published to PyPI.
-pycomputersdk = { path = "../pyComputer/pyComputerSDK" }
+pycomputersdk = "0.1.1"
