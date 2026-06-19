@@ -11,12 +11,12 @@ from pycomputersdk import (
 from levels import LEVELS
 
 # Physics
-GRAVITY        = 0.1
-JUMP_VEL       = -2.0
+GRAVITY        = 0.08
+JUMP_VEL       = -1.6
 MOVE_ACCEL     = 0.10
-FRICTION_AIR   = 1.98
+FRICTION_AIR   = 0.98
 FRICTION_GROUND= 0.88
-MAX_SPEED      = 0.30
+MAX_SPEED      = 0.50
 PLAYER_W       = 0.8
 PLAYER_H       = 1.0
 SUB_STEPS      = 4
